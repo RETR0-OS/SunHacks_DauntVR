@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        #sidebar {
+            width: 250px;
+            position: fixed;
+            top: 0;
+            left: -250px;
+            height: 100vh;
+            z-index: 999;
+            background: #f8f9fa;
+            transition: all 0.3s;
+            overflow-y: auto;
+        }
+        #sidebar.active {
+            left: 0;
+        }
+        #content {
+            width: calc(100% - 250px);
+            margin-left: 250px;
+            transition: all 0.3s;
+        }
+        #content.active {
+            width: 100%;
+            margin-left: 0;
+        }
+        .sidebar-header {
+            padding: 20px;
+            background: #f1f1f1;
+        }
+        .close-btn {
+            cursor: pointer;
+        }
+        .open-btn {
+            position: fixed;
+            left: 10px;
+            top: 10px;
+            z-index: 998;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .open-btn.hidden {
+            left: -50px;
+        }
+        .profile-icon {
+            font-size: 48px;
+        }
+        .fears-list {
+            display: none;
+        }
+        .chart-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+
+        <!-- Sidebar -->
+        <nav id="sidebar">
+            <div class="sidebar-header d-flex justify-content-between align-items-center">
+                <h3>Dashboard</h3>
+                <i class="fas fa-times close-btn"></i>
+            </div>
+            <div class="text-center mb-4">
+                <div class="profile-icon">👤</div>
+                <h5 class="mt-2">{{request.user.username}}</h5>
+            </div>
+            <div class="fears-section">
+                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1">
+                    <span>Active Programs</span>
+                    <i class="fas fa-chevron-down"></i>
+                </h6>
+                <ul class="fears-list nav flex-column">
+                    <li class="nav-item"><a class="nav-link" href="#">Fear of Heights- L1</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <h1 class="text-center m-5">DauntVR Dashboard</h1>
+        <!-- Page Content -->
+        <div id="content" class="mt-5">
+
+            <i class="fas fa-bars open-btn"></i>
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="chart-container">
+                            <h5 class="card-title">Time vs Game Number</h5>
+                            <canvas id="timeLineChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="chart-container">
+                            <h5 class="card-title">Time Distribution For Latest Try</h5>
+                            <canvas id="webChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row m-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Game Data</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Trial Number</th>
+                                        <th>Total Time</th>
+                                        <th>Exposure Time</th>
+                                        <th>Sustenance Time</th>
+                                        <th>Overcome Time</th>
+                                        <th>Avoidance Time</th>
+                                        <th>Game Report</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for game in games %}
+                                        <tr>
+                                            <td>{{ forloop.counter }}</td>
+                                            <td>{{ game.totalTime }}</td>
+                                            <td>{{ game.exposureTime }}</td>
+                                            <td>{{ game.sustainTime }}</td>
+                                            <td>{{ game.overcomeTime }}</td>
+                                            <td>{{ game.lookAwayTime }}</td>
+                                            <td><a href="{% url 'game_report' game.id %}" class="btn btn-primary btn-sm">View Report</a></td>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('content');
+            const closeBtn = document.querySelector('.close-btn');
+            const openBtn = document.querySelector('.open-btn');
+            const fearsHeading = document.querySelector('.fears-section h6');
+            const fearsList = document.querySelector('.fears-list');
+
+            closeBtn.addEventListener('click', function() {
+                sidebar.classList.remove('active');
+                content.classList.remove('active');
+                openBtn.classList.remove('hidden');
+            });
+
+            openBtn.addEventListener('click', function() {
+                sidebar.classList.add('active');
+                content.classList.add('active');
+                openBtn.classList.add('hidden');
+            });
+
+            fearsHeading.addEventListener('click', function() {
+                fearsList.style.display = fearsList.style.display === 'none' ? 'block' : 'none';
+                fearsHeading.querySelector('i').classList.toggle('fa-chevron-down');
+                fearsHeading.querySelector('i').classList.toggle('fa-chevron-up');
+            });
+
+            // Chart.js code
+            fetch('/userdata/api/chart/data/')
+                .then(response => response.json())
+                .then(data => {
+                    // Line Chart
+                    console.log(data)
+                    const ctxLine = document.getElementById('timeLineChart').getContext('2d');
+                    new Chart(ctxLine, {
+                        type: 'line',
+                        data: {
+                            labels: data.labels,
+                            datasets: [
+                                {
+                                    label: 'Total Time',
+                                    data: data.totalTime,
+                                    borderColor: 'rgb(255, 99, 132)',
+                                    tension: 0.1
+                                },
+                                {
+                                    label: 'Exposure Time',
+                                    data: data.exposureTime,
+                                    borderColor: 'rgb(54, 162, 235)',
+                                    tension: 0.1
+                                },
+                                {
+                                    label: 'Sustain Time',
+                                    data: data.sustainTime,
+                                    borderColor: 'rgb(255, 206, 86)',
+                                    tension: 0.1
+                                },
+                                {
+                                    label: 'Overcome Time',
+                                    data: data.overcomeTime,
+                                    borderColor: 'rgb(75, 192, 192)',
+                                    tension: 0.1
+                                },
+                                {
+                                    label: 'Look Away Time',
+                                    data: data.lookAwayTime,
+                                    borderColor: 'rgb(153, 102, 255)',
+                                    tension: 0.1
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: 'Time vs Game Number'
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Game Number'
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Time'
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    // Web Chart
+                    const ctxWeb = document.getElementById('webChart').getContext('2d');
+                    const lastGameIndex = data.exposureTime.length - 1; // Get the index of the last game
+                    new Chart(ctxWeb, {
+                        type: 'radar',
+                        data: {
+                            labels: ['Exposure Time', 'Sustain Time', 'Overcome Time'],
+                            datasets: [{
+                                label: 'Time Distribution',
+                                data: [
+                                    data.exposureTime[lastGameIndex], // Use the last exposure time
+                                    data.sustainTime[lastGameIndex], // Use the last sustain time
+                                    data.overcomeTime[lastGameIndex]  // Use the last overcome time
+                                ],
+                                fill: true,
+                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                borderColor: 'rgb(255, 99, 132)',
+                                pointBackgroundColor: 'rgb(255, 99, 132)',
+                                pointBorderColor: '#fff',
+                                pointHoverBackgroundColor: '#fff',
+                                pointHoverBorderColor: 'rgb(255, 99, 132)'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: 'Time Distribution for Last Game'
+                                }
+                            },
+                            scales: {
+                                r: {
+                                    beginAtZero: true,
+                                    min: 0
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching chart data:', error);
+                    // Display an error message to the user
+                    document.getElementById('timeLineChart').innerHTML = 'Error loading chart data';
+                    document.getElementById('webChart').innerHTML = 'Error loading chart data';
+                });
+        });
+    </script>
+
+</body>
+</html>
