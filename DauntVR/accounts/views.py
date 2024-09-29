@@ -27,20 +27,38 @@ def api_login(request):
             }
             return JsonResponse(data)
 
-
 def web_login(request):
+    if not request.user.is_authenticated:
+        if request.method == "POST":
+            username = request.POST.get("username")
+            password = request.POST.get("password")
+
+            authenticated = authenticate(username=username, password=password)
+
+            if authenticated:
+                print("authenticated")
+                #user = User.objects.get(username=username, password=password)
+                login(request, authenticated)
+                return redirect("dashboard")
+            else:
+                return redirect("web_login")
+        else:
+
+            return render(request, "login.html")
+    return redirect("dashboard")
+
+def web_register(request):
     if request.method == "POST":
         username = request.POST.get("username")
         password = request.POST.get("password")
+        first_name = request.POST.get("first_name")
+        last_name = request.POST.get("last_name")
+        email = request.POST.get("email")
 
-        authenticated = authenticate(username=username, password=password)
+        user = User(username=username, password=password, first_name=first_name, last_name=last_name, email=email)
 
-        if authenticated:
-            print("authenticated")
-            #user = User.objects.get(username=username, password=password)
-            login(request, authenticated)
-            return redirect("dashboard")
-        else:
-            return redirect("web_login")
+        user.save()
+
+        return redirect("web_login")
     else:
-        return render(request, "login.html")
+        return render(request, "register.html")

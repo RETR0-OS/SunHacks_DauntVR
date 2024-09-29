@@ -54,9 +54,9 @@
     <div class="container">
         <a href="{% url 'dashboard' %}" class="back-button">Back</a>
         <br><br>
-        <h1>Trial Report</h1>
+        <h1>After Trial Report</h1>
         <div class="report-content">
-            {{ report_text }}
+            {{ report_text | safe }}
         </div>
     </div>
 </body>
